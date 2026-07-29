@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Project Management MVP</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #032147;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #ecad0a;
+    }
+    #status {
+      color: #209dd7;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello, world</h1>
+  <p id="status">Checking API...</p>
+  <script>
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("status").textContent = "API status: " + data.status;
+      })
+      .catch(() => {
+        document.getElementById("status").textContent = "API unreachable";
+      });
+  </script>
+</body>
+</html>

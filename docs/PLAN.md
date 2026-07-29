@@ -1,37 +1,108 @@
 # High level steps for project
 
-Part 1: Plan
+See CLAUDE.md for business requirements, technical decisions, and coding standards. See frontend/AGENTS.md for the existing frontend starting point.
 
-Enrich this document to plan out each of these parts in detail, with substeps listed out as a checklist to be checked off by the agent, and with tests and success critieria for each. Also create an AGENTS.md file inside the frontend directory that describes the existing code there. Ensure the user checks and approves the plan.
+## Part 1: Plan
 
-Part 2: Scaffolding
+- [x] Enrich this document with substeps, tests, and success criteria per part
+- [x] Create frontend/AGENTS.md describing the existing frontend code
+- [x] User reviews and approves this plan before Part 2 starts
 
-Set up the Docker infrastructure, the backend in backend/ with FastAPI, and write the start and stop scripts in the scripts/ directory. This should serve example static HTML to confirm that a 'hello world' example works running locally and also make an API call.
+**Success criteria:** user has explicitly signed off on this plan.
 
-Part 3: Add in Frontend
+## Part 2: Scaffolding
 
-Now update so that the frontend is statically built and served, so that the app has the demo Kanban board displayed at /. Comprehensive unit and integration tests.
+- [x] Create `backend/` FastAPI app (`uv` for dependency management, `pyproject.toml`)
+- [x] Backend serves a static "hello world" HTML page at `/`
+- [x] Backend exposes one example API route (e.g. `GET /api/health`) that the hello-world page calls to prove client-to-API wiring works
+- [x] `Dockerfile` that builds and runs the backend with `uv`
+- [x] `docker-compose.yml` (or equivalent) to run the container locally
+- [x] `scripts/start.sh`, `scripts/start.ps1`, `scripts/stop.sh`, `scripts/stop.ps1` for Mac, PC, Linux
+- [x] Update `scripts/AGENTS.md` and `backend/AGENTS.md` describing what was set up
 
-Part 4: Add in a fake user sign in experience
+**Tests:**
+- Manual: `scripts/start` brings up the container; visiting `/` shows the hello-world page and its on-page API call succeeds
+- `scripts/stop` cleanly tears the container down
 
-Now update so that on first hitting /, you need to log in with dummy credentials ("user", "password") in order to see the Kanban, and you can log out. Comprehensive tests.
+**Success criteria:** a fresh clone can run the start script and see a working hello-world page making a live API call, entirely inside Docker.
 
-Part 5: Database modeling
+## Part 3: Add in Frontend
 
-Now propose a database schema for the Kanban, saving it as JSON. Document the database approach in docs/ and get user sign off.
+- [ ] Configure Next.js for static export (`output: "export"` or equivalent)
+- [ ] Update Dockerfile/build so the backend serves the built frontend static assets at `/`
+- [ ] Confirm the existing Kanban demo (frontend/AGENTS.md) renders unchanged when served by FastAPI instead of `next dev`
+- [ ] Wire frontend unit tests (`npm run test:unit`) and e2e tests (`npm run test:e2e`) into a single documented command, run against the Dockerized build
+- [ ] Add a backend integration test that asserts `/` returns the built frontend HTML
 
-Part 6: Backend
+**Tests:**
+- `npm run test:all` passes
+- Backend integration test confirms static asset serving
+- Manual: `scripts/start`, visit `/`, see the same Kanban demo as `next dev`, drag/drop and add/delete cards still work
 
-Now add API routes to allow the backend to read and change the Kanban for a given user; test this thoroughly with backend unit tests. The database should be created if it doesn't exist.
+**Success criteria:** the full demo Kanban UI loads at `/` when running only via Docker/FastAPI (no `next dev` needed), with all existing frontend tests still green.
 
-Part 7: Frontend + Backend
+## Part 4: Add in a fake user sign in experience
 
-Now have the frontend actually use the backend API, so that the app is a proper persistent Kanban board. Test very throughly.
+- [ ] Login page/form requiring hardcoded `user` / `password`
+- [ ] Redirect unauthenticated visits to `/` to the login page; redirect authenticated visits away from login
+- [ ] Session handling (e.g. cookie or token) issued by backend on successful login
+- [ ] Logout action that clears the session and returns to login
+- [ ] Frontend unit tests for login form validation (wrong password rejected, correct password accepted)
+- [ ] E2E test: cannot see Kanban without logging in; can log in, see Kanban, log out, redirected to login
+- [ ] Backend unit tests for the login/logout/session-check endpoints
 
-Part 8: AI connectivity
+**Success criteria:** visiting `/` with no session shows login; correct hardcoded credentials grant access to the Kanban board; logout revokes access; all new tests green alongside existing suite.
 
-Now allow the backend to make an AI call via OpenRouter. Test connectivity with a simple "2+2" test and ensure the AI call is working.
+## Part 5: Database modeling
 
-Part 9: Now extend the backend call so that it always calls the AI with the JSON of the Kanban board, plus the user's question (and conversation history). The AI should respond with Structured Outputs that includes the response to the user and optionaly an update to the Kanban. Test thoroughly.
+- [ ] Propose a normalized schema (mirroring `BoardData` in frontend/src/lib/kanban.ts: users, boards, columns, cards) as JSON in `docs/`
+- [ ] Document the database approach (SQLite, file location, migration/creation strategy) in `docs/`
+- [ ] Get explicit user sign-off on the schema before Part 6 starts
 
-Part 10: Now add a beautiful sidebar widget to the UI supporting full AI chat, and allowing the LLM (as it determines) to update the Kanban based on its Structured Outputs. If the AI updates the Kanban, then the UI should refresh automatically.
+**Success criteria:** user has approved the schema document.
+
+## Part 6: Backend
+
+- [ ] SQLite database created automatically on first run if it doesn't exist, seeded with the demo board for the hardcoded user
+- [ ] API routes: get board, rename column, add card, edit card, delete card, move card — scoped to the signed-in user
+- [ ] Backend unit tests for every route, including edge cases (invalid ids, empty titles, moving to a nonexistent column)
+- [ ] Tests confirm the DB file is created fresh when missing and reused when present
+
+**Success criteria:** full CRUD + move on the Kanban is possible via API alone (e.g. via curl/pytest), independent of the frontend, backed by a real SQLite file, with thorough passing tests.
+
+## Part 7: Frontend + Backend
+
+- [ ] Replace in-memory `useState(initialData)` in `KanbanBoard.tsx` with calls to the Part 6 API (fetch on load, mutate via API on rename/add/edit/delete/move)
+- [ ] Loading and error states for API calls
+- [ ] Update/add frontend tests to mock the API and cover success + failure paths
+- [ ] E2E tests updated to run against the real backend (no more purely client-side state) and confirm state persists across a page reload
+
+**Success criteria:** reloading the page preserves board state (proves persistence through the backend/DB); all frontend, backend, and e2e tests green.
+
+## Part 8: AI connectivity
+
+- [ ] Backend endpoint that calls Anthropic (key from `.env`, model per CLAUDE.md) with a trivial prompt
+- [ ] Test: send "what is 2+2?" through the endpoint, assert the response contains "4"
+- [ ] Confirm failure mode when the API key is missing/invalid is handled without crashing the server
+
+**Success criteria:** a passing test proves a live round-trip call to Anthropic works end-to-end from the backend.
+
+## Part 9: Kanban-aware AI with Structured Outputs
+
+- [ ] Extend the AI endpoint to accept: current board JSON, user's message, conversation history
+- [ ] Define a Structured Output schema: a text reply to the user, plus an optional Kanban update (create/edit/move/delete cards, rename columns)
+- [ ] Apply the optional Kanban update to the database when present
+- [ ] Backend tests: AI asked to answer a question only (no board change) → board unchanged; AI asked to move/create/edit a card → board updated correctly and matches the structured update returned
+- [ ] Handle/test malformed or partial structured responses gracefully
+
+**Success criteria:** a conversational request like "move the roadmap card to Done" results in a correct DB update and a sensible chat reply, verified by tests without needing the UI.
+
+## Part 10: AI chat sidebar in the UI
+
+- [ ] Sidebar chat component: message history, input box, send button, styled per CLAUDE.md color scheme
+- [ ] Sidebar calls the Part 9 endpoint with the current board state and message history
+- [ ] When the response includes a Kanban update, refresh the board view automatically without a full page reload
+- [ ] Frontend unit tests for the chat component (renders history, sends message, handles board-refresh callback)
+- [ ] E2E test: ask the AI to move/add a card via chat, confirm the board visibly updates
+
+**Success criteria:** a user can chat in the sidebar, ask for a Kanban change in plain language, and see the board update live, with tests covering both the chat UI and the resulting board mutation.
