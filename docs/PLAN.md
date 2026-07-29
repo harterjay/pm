@@ -28,11 +28,11 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 3: Add in Frontend
 
-- [ ] Configure Next.js for static export (`output: "export"` or equivalent)
-- [ ] Update Dockerfile/build so the backend serves the built frontend static assets at `/`
-- [ ] Confirm the existing Kanban demo (frontend/AGENTS.md) renders unchanged when served by FastAPI instead of `next dev`
-- [ ] Wire frontend unit tests (`npm run test:unit`) and e2e tests (`npm run test:e2e`) into a single documented command, run against the Dockerized build
-- [ ] Add a backend integration test that asserts `/` returns the built frontend HTML
+- [x] Configure Next.js for static export (`output: "export"` or equivalent)
+- [x] Update Dockerfile/build so the backend serves the built frontend static assets at `/`
+- [x] Confirm the existing Kanban demo (frontend/AGENTS.md) renders unchanged when served by FastAPI instead of `next dev`
+- [x] Wire frontend unit tests (`npm run test:unit`) and e2e tests (`npm run test:e2e`) into a single documented command, run against the Dockerized build
+- [x] Add a backend integration test that asserts `/` returns the built frontend HTML
 
 **Tests:**
 - `npm run test:all` passes

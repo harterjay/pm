@@ -1,6 +1,6 @@
 # Frontend: Kanban Studio
 
-Pure frontend demo of the Kanban board. State is in-memory only (no backend, no persistence, no auth) — this is the starting point for Parts 3+ of docs/PLAN.md, which wire it to the real backend.
+Kanban board UI. State is still in-memory only (no persistence, no auth) — that's wired up in later parts of docs/PLAN.md. As of Part 3, `next.config.ts` sets `output: "export"` and the Docker build compiles this into static HTML/JS served by FastAPI at `/` (see backend/AGENTS.md) — no `next dev`/Node server needed at runtime.
 
 ## Stack
 
@@ -33,12 +33,13 @@ All mutation logic lives in `KanbanBoard.tsx` and is passed down as callback pro
 ## Testing
 
 - Unit/component: `npm run test:unit` (Vitest, jsdom) — `src/lib/kanban.test.ts` covers `moveCard` logic in isolation; `src/components/KanbanBoard.test.tsx` covers rendering, column rename, add/delete card
-- E2E: `npm run test:e2e` (Playwright) — `tests/kanban.spec.ts` covers board load, adding a card, and drag-and-drop between columns via raw mouse events (`data-testid="column-*"` / `data-testid="card-*"` are the drag/drop test hooks — keep them when refactoring)
-- `npm run test:all` runs both
+- E2E: `npm run test:e2e` (Playwright) — `tests/kanban.spec.ts` covers board load, adding a card, and drag-and-drop between columns via raw mouse events (`data-testid="column-*"` / `data-testid="card-*"` are the drag/drop test hooks — keep them when refactoring). Runs against the real Dockerized build, not `next dev`: `playwright.config.ts`'s `webServer` runs `docker compose up --build` (`cwd: ".."`) and `baseURL` points at `http://127.0.0.1:8000`.
+- `npm run test:all` runs both — this is the single documented command for the full frontend suite
+
+Known issue: on Windows, Playwright's `webServer` teardown doesn't reliably stop the `docker compose up` process it spawns, so a container can be left running after `npm run test:e2e`. Run `docker compose down` (or `scripts/stop.ps1`) afterward if `docker ps` still shows `pm-app-1`.
 
 ## Known gaps for later parts
 
 - No auth/login gating (Part 4)
 - No API calls — everything is local `useState` (Parts 6-7)
 - No AI chat sidebar (Parts 8-10)
-- Not yet wired into the Docker/static-export build (Part 2-3)
