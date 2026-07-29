@@ -8,9 +8,21 @@ describe("ChatSidebar", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("shows an empty-state hint when there is no history", () => {
+  it("starts minimized, showing only the toggle button", () => {
     render(<ChatSidebar board={initialData} onBoardUpdate={vi.fn()} />);
+    expect(screen.getByTestId("chat-toggle")).toBeInTheDocument();
+    expect(screen.queryByTestId("chat-input")).not.toBeInTheDocument();
+  });
+
+  it("opens to show the empty-state hint, and can be minimized again", async () => {
+    render(<ChatSidebar board={initialData} onBoardUpdate={vi.fn()} />);
+    await userEvent.click(screen.getByTestId("chat-toggle"));
+
     expect(screen.getByText(/ask me to add, edit, move, or delete/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId("chat-minimize"));
+    expect(screen.queryByTestId("chat-input")).not.toBeInTheDocument();
+    expect(screen.getByTestId("chat-toggle")).toBeInTheDocument();
   });
 
   it("sends a message, renders the reply, and refreshes the board", async () => {
@@ -22,6 +34,7 @@ describe("ChatSidebar", () => {
     const onBoardUpdate = vi.fn();
 
     render(<ChatSidebar board={initialData} onBoardUpdate={onBoardUpdate} />);
+    await userEvent.click(screen.getByTestId("chat-toggle"));
     await userEvent.type(screen.getByTestId("chat-input"), "Move card-1 to Done");
     await userEvent.click(screen.getByTestId("chat-send"));
 
@@ -47,6 +60,7 @@ describe("ChatSidebar", () => {
     const onBoardUpdate = vi.fn();
 
     render(<ChatSidebar board={initialData} onBoardUpdate={onBoardUpdate} />);
+    await userEvent.click(screen.getByTestId("chat-toggle"));
     await userEvent.type(screen.getByTestId("chat-input"), "hello");
     await userEvent.click(screen.getByTestId("chat-send"));
 

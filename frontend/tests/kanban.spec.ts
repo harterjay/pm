@@ -51,7 +51,11 @@ test("persists state across a reload", async ({ page }) => {
 test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
   const card = page.getByTestId("card-card-1");
-  const targetColumn = page.getByTestId("column-col-review");
+  // Adjacent to the source column (col-backlog) so both stay within the
+  // viewport at once — the columns row scrolls horizontally now that it
+  // has a fixed comfortable width per column, so a distant target column
+  // can be scrolled out of view depending on viewport width.
+  const targetColumn = page.getByTestId("column-col-discovery");
   const cardBox = await card.boundingBox();
   const columnBox = await targetColumn.boundingBox();
   if (!cardBox || !columnBox) {

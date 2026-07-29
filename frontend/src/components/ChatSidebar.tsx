@@ -14,6 +14,7 @@ type ChatSidebarProps = {
 };
 
 export const ChatSidebar = ({ board, onBoardUpdate }: ChatSidebarProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -51,20 +52,56 @@ export const ChatSidebar = ({ board, onBoardUpdate }: ChatSidebarProps) => {
     }
   };
 
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        data-testid="chat-toggle"
+        aria-label="Open AI assistant"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--secondary-purple)] text-white shadow-[var(--shadow)] transition hover:brightness-110"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+      </button>
+    );
+  }
+
   return (
-    <aside className="flex w-full flex-col gap-4 self-start rounded-[32px] border border-[var(--stroke)] bg-white/80 p-6 shadow-[var(--shadow)] backdrop-blur lg:w-96">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
-          AI Assistant
-        </p>
-        <h2 className="mt-2 font-display text-xl font-semibold text-[var(--navy-dark)]">
-          Chat with the assistant
-        </h2>
+    <aside className="fixed bottom-6 right-6 z-40 flex h-[32rem] max-h-[calc(100vh-3rem)] w-96 max-w-[calc(100vw-3rem)] flex-col gap-4 rounded-[32px] border border-[var(--stroke)] bg-white/95 p-6 shadow-[var(--shadow)] backdrop-blur">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
+            AI Assistant
+          </p>
+          <h2 className="mt-2 font-display text-xl font-semibold text-[var(--navy-dark)]">
+            Chat with the assistant
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          data-testid="chat-minimize"
+          aria-label="Minimize AI assistant"
+          className="rounded-full border border-[var(--stroke)] px-2 py-1 text-xs font-semibold text-[var(--gray-text)] transition hover:text-[var(--navy-dark)]"
+        >
+          ✕
+        </button>
       </div>
 
       <div
         data-testid="chat-messages"
-        className="flex max-h-[50vh] flex-1 flex-col gap-3 overflow-y-auto"
+        className="flex flex-1 flex-col gap-3 overflow-y-auto"
       >
         {messages.length === 0 && (
           <p className="text-sm leading-6 text-[var(--gray-text)]">

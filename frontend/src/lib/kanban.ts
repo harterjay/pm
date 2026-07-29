@@ -71,6 +71,22 @@ export const initialData: BoardData = {
   },
 };
 
+// Keyed by the column's stable id (not its renamable title) so a rename
+// never changes which color a column has. Cycles through the CLAUDE.md
+// palette rather than introducing new colors.
+const COLUMN_ACCENT_COLORS = [
+  "var(--gray-text)",
+  "var(--primary-blue)",
+  "var(--accent-yellow)",
+  "var(--secondary-purple)",
+  "var(--navy-dark)",
+];
+
+export const columnAccentColor = (columns: Column[], columnId: string): string => {
+  const index = columns.findIndex((column) => column.id === columnId);
+  return COLUMN_ACCENT_COLORS[index % COLUMN_ACCENT_COLORS.length];
+};
+
 const isColumnId = (columns: Column[], id: string) =>
   columns.some((column) => column.id === id);
 
