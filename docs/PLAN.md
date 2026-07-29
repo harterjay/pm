@@ -72,10 +72,10 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 7: Frontend + Backend
 
-- [ ] Replace in-memory `useState(initialData)` in `KanbanBoard.tsx` with calls to the Part 6 API (fetch on load, mutate via API on rename/add/edit/delete/move)
-- [ ] Loading and error states for API calls
-- [ ] Update/add frontend tests to mock the API and cover success + failure paths
-- [ ] E2E tests updated to run against the real backend (no more purely client-side state) and confirm state persists across a page reload
+- [x] Replace in-memory `useState(initialData)` in `KanbanBoard.tsx` with calls to the Part 6 API (fetch on load, mutate via API on rename/add/edit/delete/move)
+- [x] Loading and error states for API calls
+- [x] Update/add frontend tests to mock the API and cover success + failure paths
+- [x] E2E tests updated to run against the real backend (no more purely client-side state) and confirm state persists across a page reload
 
 **Success criteria:** reloading the page preserves board state (proves persistence through the backend/DB); all frontend, backend, and e2e tests green.
 

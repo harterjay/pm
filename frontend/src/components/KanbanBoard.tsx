@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,11 +13,37 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { moveCard, type BoardData } from "@/lib/kanban";
 
 export const KanbanBoard = () => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+  const [board, setBoard] = useState<BoardData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/board")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load board");
+        }
+        return response.json() as Promise<BoardData>;
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setBoard(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError("Couldn't load the board. Try refreshing the page.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -25,7 +51,27 @@ export const KanbanBoard = () => {
     })
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const cardsById = useMemo(() => board?.cards ?? {}, [board]);
+
+  const runMutation = async (
+    optimisticBoard: BoardData,
+    request: () => Promise<Response>
+  ) => {
+    const previousBoard = board;
+    setBoard(optimisticBoard);
+    setActionError(null);
+    try {
+      const response = await request();
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+      const nextBoard = (await response.json()) as BoardData;
+      setBoard(nextBoard);
+    } catch {
+      setBoard(previousBoard);
+      setActionError("Something went wrong. Please try again.");
+    }
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
@@ -35,58 +81,108 @@ export const KanbanBoard = () => {
     const { active, over } = event;
     setActiveCardId(null);
 
-    if (!over || active.id === over.id) {
+    if (!board || !over || active.id === over.id) {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const isOverColumn = board.columns.some((column) => column.id === overId);
+    const targetColumn = isOverColumn
+      ? board.columns.find((column) => column.id === overId)
+      : board.columns.find((column) => column.cardIds.includes(overId));
+
+    if (!targetColumn) {
+      return;
+    }
+
+    const remainingIds = targetColumn.cardIds.filter((id) => id !== activeId);
+    const overIndex = remainingIds.indexOf(overId);
+    const position = isOverColumn || overIndex === -1 ? remainingIds.length : overIndex;
+
+    const optimisticBoard: BoardData = {
+      ...board,
+      columns: moveCard(board.columns, activeId, overId),
+    };
+
+    runMutation(optimisticBoard, () =>
+      fetch(`/api/board/cards/${activeId}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnId: targetColumn.id, position }),
+      })
+    );
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
+    if (!board) return;
+    const optimisticBoard: BoardData = {
+      ...board,
+      columns: board.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
       ),
-    }));
+    };
+    runMutation(optimisticBoard, () =>
+      fetch(`/api/board/columns/${columnId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      })
+    );
   };
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
-    const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
+    if (!board) return;
+    // Optimistic UI needs a placeholder id; the server assigns the real one
+    // and the mutation reconciles it away on success.
+    const placeholderId = `pending-${Date.now()}`;
+    const optimisticBoard: BoardData = {
+      ...board,
       cards: {
-        ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
+        ...board.cards,
+        [placeholderId]: {
+          id: placeholderId,
+          title,
+          details: details || "No details yet.",
+        },
       },
-      columns: prev.columns.map((column) =>
+      columns: board.columns.map((column) =>
         column.id === columnId
-          ? { ...column, cardIds: [...column.cardIds, id] }
+          ? { ...column, cardIds: [...column.cardIds, placeholderId] }
           : column
       ),
-    }));
+    };
+
+    runMutation(optimisticBoard, () =>
+      fetch(`/api/board/columns/${columnId}/cards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, details }),
+      })
+    );
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
-    });
+    if (!board) return;
+    const optimisticBoard: BoardData = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).filter(([id]) => id !== cardId)
+      ),
+      columns: board.columns.map((column) =>
+        column.id === columnId
+          ? {
+              ...column,
+              cardIds: column.cardIds.filter((id) => id !== cardId),
+            }
+          : column
+      ),
+    };
+
+    runMutation(optimisticBoard, () =>
+      fetch(`/api/board/cards/${cardId}`, { method: "DELETE" })
+    );
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
@@ -95,6 +191,22 @@ export const KanbanBoard = () => {
     await fetch("/api/logout", { method: "POST" });
     window.location.href = "/login";
   };
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-6 text-center">
+        <p className="text-sm font-semibold text-[var(--navy-dark)]">{loadError}</p>
+      </div>
+    );
+  }
+
+  if (!board) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm font-semibold text-[var(--gray-text)]">Loading board…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -143,6 +255,15 @@ export const KanbanBoard = () => {
               </div>
             ))}
           </div>
+          {actionError && (
+            <p
+              role="alert"
+              data-testid="board-error"
+              className="text-sm font-semibold text-red-600"
+            >
+              {actionError}
+            </p>
+          )}
         </header>
 
         <DndContext

@@ -21,6 +21,33 @@ test("adds a card to a column", async ({ page }) => {
   await expect(firstColumn.getByText("Playwright card")).toBeVisible();
 });
 
+test("persists state across a reload", async ({ page }) => {
+  await page.goto("/");
+  const firstColumn = page.locator('[data-testid^="column-"]').first();
+  await firstColumn.getByRole("button", { name: /add a card/i }).click();
+  await firstColumn.getByPlaceholder("Card title").fill("Reload persistence card");
+  await firstColumn.getByPlaceholder("Details").fill("Should survive a reload.");
+
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.request().method() === "POST" && res.url().includes("/cards")
+    ),
+    firstColumn.getByRole("button", { name: /add card/i }).click(),
+  ]);
+  expect(response.ok()).toBeTruthy();
+
+  await expect(firstColumn.getByText("Reload persistence card")).toBeVisible();
+
+  await page.reload();
+
+  await expect(
+    page
+      .locator('[data-testid^="column-"]')
+      .first()
+      .getByText("Reload persistence card")
+  ).toBeVisible();
+});
+
 test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
   const card = page.getByTestId("card-card-1");

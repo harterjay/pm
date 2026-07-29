@@ -10,13 +10,8 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:8000",
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: "docker compose up --build",
-    cwd: "..",
-    url: "http://127.0.0.1:8000/api/health",
-    reuseExistingServer: true,
-    timeout: 180_000,
-  },
+  globalSetup: "./tests/global-setup.ts",
+  globalTeardown: "./tests/global-teardown.ts",
   projects: [
     {
       name: "chromium",
