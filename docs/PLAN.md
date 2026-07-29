@@ -99,10 +99,10 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 10: AI chat sidebar in the UI
 
-- [ ] Sidebar chat component: message history, input box, send button, styled per CLAUDE.md color scheme
-- [ ] Sidebar calls the Part 9 endpoint with the current board state and message history
-- [ ] When the response includes a Kanban update, refresh the board view automatically without a full page reload
-- [ ] Frontend unit tests for the chat component (renders history, sends message, handles board-refresh callback)
-- [ ] E2E test: ask the AI to move/add a card via chat, confirm the board visibly updates
+- [x] Sidebar chat component: message history, input box, send button, styled per CLAUDE.md color scheme
+- [x] Sidebar calls the Part 9 endpoint with the current board state and message history
+- [x] When the response includes a Kanban update, refresh the board view automatically without a full page reload
+- [x] Frontend unit tests for the chat component (renders history, sends message, handles board-refresh callback)
+- [x] E2E test: ask the AI to move/add a card via chat, confirm the board visibly updates
 
 **Success criteria:** a user can chat in the sidebar, ask for a Kanban change in plain language, and see the board update live, with tests covering both the chat UI and the resulting board mutation.
