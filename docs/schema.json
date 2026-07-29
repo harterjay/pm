@@ -1,0 +1,81 @@
+{
+  "tables": {
+    "users": {
+      "columns": {
+        "id": { "type": "INTEGER", "primary_key": true, "autoincrement": true },
+        "username": { "type": "TEXT", "not_null": true, "unique": true },
+        "password_hash": { "type": "TEXT", "not_null": true }
+      },
+      "notes": "Multi-user-ready per CLAUDE.md, but Part 4's login check is a hardcoded 'user'/'password' comparison in Python, not a DB lookup. password_hash exists so a real credential check can be swapped in later without a schema change; it is not read by the app yet."
+    },
+    "boards": {
+      "columns": {
+        "id": { "type": "INTEGER", "primary_key": true, "autoincrement": true },
+        "user_id": {
+          "type": "INTEGER",
+          "not_null": true,
+          "unique": true,
+          "references": "users.id",
+          "on_delete": "CASCADE"
+        }
+      },
+      "notes": "user_id is UNIQUE to enforce the MVP's '1 board per user' rule at the DB level. No name/title column — BoardData has no board-level name today, and adding one would be speculative."
+    },
+    "columns": {
+      "columns": {
+        "id": { "type": "INTEGER", "primary_key": true, "autoincrement": true },
+        "board_id": {
+          "type": "INTEGER",
+          "not_null": true,
+          "references": "boards.id",
+          "on_delete": "CASCADE"
+        },
+        "slug": { "type": "TEXT", "not_null": true },
+        "title": { "type": "TEXT", "not_null": true },
+        "position": { "type": "INTEGER", "not_null": true }
+      },
+      "unique": [
+        ["board_id", "slug"],
+        ["board_id", "position"]
+      ],
+      "notes": "Columns are fixed in count/order but renamable (business requirement), so 'slug' is the stable identifier code and the AI feature key off; 'title' is the user-editable display name. 'position' is the 0-based left-to-right order. slug values are the current frontend seed ids verbatim (col-backlog, col-discovery, col-progress, col-review, col-done) so the API layer can pass slug straight through as BoardData's column.id with zero translation, and existing data-testid=\"column-<id>\" hooks in the frontend/e2e tests keep working unchanged."
+    },
+    "cards": {
+      "columns": {
+        "id": { "type": "INTEGER", "primary_key": true, "autoincrement": true },
+        "column_id": {
+          "type": "INTEGER",
+          "not_null": true,
+          "references": "columns.id",
+          "on_delete": "CASCADE"
+        },
+        "title": { "type": "TEXT", "not_null": true },
+        "details": { "type": "TEXT", "not_null": true, "default": "" },
+        "position": { "type": "INTEGER", "not_null": true }
+      },
+      "unique": [["column_id", "position"]],
+      "notes": "position is the 0-based order within the column (used for both same-column reorder and cross-column drop, mirroring lib/kanban.ts's moveCard). The API layer formats BoardData's card.id as 'card-<id>' to match the existing 'card-1'..'card-8' convention the e2e tests (kanban.spec.ts) already assume."
+    }
+  },
+  "seed": {
+    "user": { "username": "user" },
+    "columns": [
+      { "slug": "col-backlog", "title": "Backlog", "position": 0 },
+      { "slug": "col-discovery", "title": "Discovery", "position": 1 },
+      { "slug": "col-progress", "title": "In Progress", "position": 2 },
+      { "slug": "col-review", "title": "Review", "position": 3 },
+      { "slug": "col-done", "title": "Done", "position": 4 }
+    ],
+    "cards": [
+      { "column_slug": "col-backlog", "position": 0, "title": "Align roadmap themes", "details": "Draft quarterly themes with impact statements and metrics." },
+      { "column_slug": "col-backlog", "position": 1, "title": "Gather customer signals", "details": "Review support tags, sales notes, and churn feedback." },
+      { "column_slug": "col-discovery", "position": 0, "title": "Prototype analytics view", "details": "Sketch initial dashboard layout and key drill-downs." },
+      { "column_slug": "col-progress", "position": 0, "title": "Refine status language", "details": "Standardize column labels and tone across the board." },
+      { "column_slug": "col-progress", "position": 1, "title": "Design card layout", "details": "Add hierarchy and spacing for scanning dense lists." },
+      { "column_slug": "col-review", "position": 0, "title": "QA micro-interactions", "details": "Verify hover, focus, and loading states." },
+      { "column_slug": "col-done", "position": 0, "title": "Ship marketing page", "details": "Final copy approved and asset pack delivered." },
+      { "column_slug": "col-done", "position": 1, "title": "Close onboarding sprint", "details": "Document release notes and share internally." }
+    ],
+    "notes": "Verbatim copy of frontend/src/lib/kanban.ts's initialData. Inserted in this exact order via autoincrement, DB card ids 1..8 land on 'card-1'..'card-8' — matching the ids the existing seed data and e2e tests already use."
+  }
+}

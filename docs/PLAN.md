@@ -55,9 +55,9 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 5: Database modeling
 
-- [ ] Propose a normalized schema (mirroring `BoardData` in frontend/src/lib/kanban.ts: users, boards, columns, cards) as JSON in `docs/`
-- [ ] Document the database approach (SQLite, file location, migration/creation strategy) in `docs/`
-- [ ] Get explicit user sign-off on the schema before Part 6 starts
+- [x] Propose a normalized schema (mirroring `BoardData` in frontend/src/lib/kanban.ts: users, boards, columns, cards) as JSON in `docs/`
+- [x] Document the database approach (SQLite, file location, migration/creation strategy) in `docs/`
+- [x] Get explicit user sign-off on the schema before Part 6 starts
 
 **Success criteria:** user has approved the schema document.
 
