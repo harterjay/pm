@@ -89,11 +89,11 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 9: Kanban-aware AI with Structured Outputs
 
-- [ ] Extend the AI endpoint to accept: current board JSON, user's message, conversation history
-- [ ] Define a Structured Output schema: a text reply to the user, plus an optional Kanban update (create/edit/move/delete cards, rename columns)
-- [ ] Apply the optional Kanban update to the database when present
-- [ ] Backend tests: AI asked to answer a question only (no board change) → board unchanged; AI asked to move/create/edit a card → board updated correctly and matches the structured update returned
-- [ ] Handle/test malformed or partial structured responses gracefully
+- [x] Extend the AI endpoint to accept: current board JSON, user's message, conversation history
+- [x] Define a Structured Output schema: a text reply to the user, plus an optional Kanban update (create/edit/move/delete cards, rename columns)
+- [x] Apply the optional Kanban update to the database when present
+- [x] Backend tests: AI asked to answer a question only (no board change) → board unchanged; AI asked to move/create/edit a card → board updated correctly and matches the structured update returned
+- [x] Handle/test malformed or partial structured responses gracefully
 
 **Success criteria:** a conversational request like "move the roadmap card to Done" results in a correct DB update and a sensible chat reply, verified by tests without needing the UI.
 

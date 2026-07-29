@@ -2,6 +2,7 @@ import os
 import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse
@@ -78,6 +79,22 @@ class AskRequest(BaseModel):
 
 class AskResponse(BaseModel):
     reply: str
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    board: board_module.Board
+    message: str
+    history: list[ChatMessage] = []
+
+
+class ChatApiResponse(BaseModel):
+    reply: str
+    board: board_module.Board
 
 
 @app.get("/api/health")
@@ -163,6 +180,28 @@ def move_card_route(
 @app.post("/api/ai/ask", response_model=AskResponse)
 def ask_ai(payload: AskRequest, username: str = Depends(require_user)) -> AskResponse:
     return AskResponse(reply=ai_module.ask(payload.prompt))
+
+
+@app.post("/api/ai/chat", response_model=ChatApiResponse)
+def chat_ai(
+    payload: ChatRequest,
+    username: str = Depends(require_user),
+    conn: sqlite3.Connection = Depends(get_db),
+) -> ChatApiResponse:
+    history = [{"role": m.role, "content": m.content} for m in payload.history]
+    result = ai_module.chat(payload.board, payload.message, history)
+
+    board = board_module.get_board(conn, username)
+    if result.action is not None:
+        try:
+            board = ai_module.apply_action(conn, username, result.action)
+        except HTTPException:
+            # The model referenced a card/column that doesn't exist (or an
+            # invalid edit, e.g. an empty title) — keep the board unchanged
+            # rather than failing the whole chat turn.
+            pass
+
+    return ChatApiResponse(reply=result.reply, board=board)
 
 
 @app.get("/")
