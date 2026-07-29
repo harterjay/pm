@@ -43,13 +43,13 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 4: Add in a fake user sign in experience
 
-- [ ] Login page/form requiring hardcoded `user` / `password`
-- [ ] Redirect unauthenticated visits to `/` to the login page; redirect authenticated visits away from login
-- [ ] Session handling (e.g. cookie or token) issued by backend on successful login
-- [ ] Logout action that clears the session and returns to login
-- [ ] Frontend unit tests for login form validation (wrong password rejected, correct password accepted)
-- [ ] E2E test: cannot see Kanban without logging in; can log in, see Kanban, log out, redirected to login
-- [ ] Backend unit tests for the login/logout/session-check endpoints
+- [x] Login page/form requiring hardcoded `user` / `password`
+- [x] Redirect unauthenticated visits to `/` to the login page; redirect authenticated visits away from login
+- [x] Session handling (e.g. cookie or token) issued by backend on successful login
+- [x] Logout action that clears the session and returns to login
+- [x] Frontend unit tests for login form validation (wrong password rejected, correct password accepted)
+- [x] E2E test: cannot see Kanban without logging in; can log in, see Kanban, log out, redirected to login
+- [x] Backend unit tests for the login/logout/session-check endpoints
 
 **Success criteria:** visiting `/` with no session shows login; correct hardcoded credentials grant access to the Kanban board; logout revokes access; all new tests green alongside existing suite.
 

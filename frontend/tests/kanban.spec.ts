@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { loginViaApi } from "./auth";
+
+test.beforeEach(async ({ page }) => {
+  await loginViaApi(page);
+});
 
 test("loads the kanban board", async ({ page }) => {
   await page.goto("/");
