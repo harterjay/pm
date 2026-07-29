@@ -2,6 +2,7 @@
 .idea
 .venv
 .env
+backend/data
 **/__pycache__
 **/node_modules
 **/.next

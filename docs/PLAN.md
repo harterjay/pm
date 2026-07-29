@@ -63,10 +63,10 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 6: Backend
 
-- [ ] SQLite database created automatically on first run if it doesn't exist, seeded with the demo board for the hardcoded user
-- [ ] API routes: get board, rename column, add card, edit card, delete card, move card — scoped to the signed-in user
-- [ ] Backend unit tests for every route, including edge cases (invalid ids, empty titles, moving to a nonexistent column)
-- [ ] Tests confirm the DB file is created fresh when missing and reused when present
+- [x] SQLite database created automatically on first run if it doesn't exist, seeded with the demo board for the hardcoded user
+- [x] API routes: get board, rename column, add card, edit card, delete card, move card — scoped to the signed-in user
+- [x] Backend unit tests for every route, including edge cases (invalid ids, empty titles, moving to a nonexistent column)
+- [x] Tests confirm the DB file is created fresh when missing and reused when present
 
 **Success criteria:** full CRUD + move on the Kanban is possible via API alone (e.g. via curl/pytest), independent of the frontend, backed by a real SQLite file, with thorough passing tests.
 
