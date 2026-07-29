@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
+from app import ai as ai_module
 from app import board as board_module
 from app.db import get_connection, init_db
 
@@ -69,6 +70,14 @@ class EditCardRequest(BaseModel):
 class MoveCardRequest(BaseModel):
     columnId: str
     position: int
+
+
+class AskRequest(BaseModel):
+    prompt: str
+
+
+class AskResponse(BaseModel):
+    reply: str
 
 
 @app.get("/api/health")
@@ -149,6 +158,11 @@ def move_card_route(
     conn: sqlite3.Connection = Depends(get_db),
 ) -> board_module.Board:
     return board_module.move_card(conn, username, card_id, payload.columnId, payload.position)
+
+
+@app.post("/api/ai/ask", response_model=AskResponse)
+def ask_ai(payload: AskRequest, username: str = Depends(require_user)) -> AskResponse:
+    return AskResponse(reply=ai_module.ask(payload.prompt))
 
 
 @app.get("/")

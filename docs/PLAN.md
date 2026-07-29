@@ -81,9 +81,9 @@ See CLAUDE.md for business requirements, technical decisions, and coding standar
 
 ## Part 8: AI connectivity
 
-- [ ] Backend endpoint that calls Anthropic (key from `.env`, model per CLAUDE.md) with a trivial prompt
-- [ ] Test: send "what is 2+2?" through the endpoint, assert the response contains "4"
-- [ ] Confirm failure mode when the API key is missing/invalid is handled without crashing the server
+- [x] Backend endpoint that calls Anthropic (key from `.env`, model per CLAUDE.md) with a trivial prompt
+- [x] Test: send "what is 2+2?" through the endpoint, assert the response contains "4"
+- [x] Confirm failure mode when the API key is missing/invalid is handled without crashing the server
 
 **Success criteria:** a passing test proves a live round-trip call to Anthropic works end-to-end from the backend.
 
